@@ -6,9 +6,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SearchRobloxUserResponse(
     @SerialName("previousPageCursor")
-    val previousPage: String,
+    val previousPage: String? = null,
     @SerialName("nextPageCursor")
-    val nextPage: String,
+    val nextPage: String? = null,
     val data: List<UserResponse>
 ) {
     @Serializable
