@@ -1,4 +1,5 @@
-package me.hechfx.api.valorant
+package me.hechfx.api.riot
 
-class ValorantInstance(val apiKey: String) {
+class RiotInstance(val apiKey: String) {
+    // TODO("Need to write the files that receives the json strings")
 }

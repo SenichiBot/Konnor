@@ -6,6 +6,9 @@ import dev.kord.gateway.start
 import dev.kord.rest.service.RestClient
 import me.hechfx.konnor.command.`fun`.*
 import me.hechfx.konnor.command.economy.*
+import me.hechfx.konnor.command.minecraft.MinecraftCommand
+import me.hechfx.konnor.command.minecraft.MinecraftServerCommandExecutor
+import me.hechfx.konnor.command.minecraft.MinecraftUserCommandExecutor
 import me.hechfx.konnor.command.misc.*
 import me.hechfx.konnor.command.social.*
 import me.hechfx.konnor.command.social.button.*
@@ -49,7 +52,14 @@ class Konnor(val config: DiscordConfig) {
     }
 
     private fun loadCommands(commandManager: CommandManager) {
-        //==[ Fun ]==
+        // ==[ Minecraft ]==
+        commandManager.register(
+            MinecraftCommand,
+            MinecraftUserCommandExecutor(),
+            MinecraftServerCommandExecutor()
+        )
+
+        // ==[ Fun ]==
         commandManager.register(RobloxCommand, RobloxUserCommandExecutor())
 
         // ==[ Misc ]==

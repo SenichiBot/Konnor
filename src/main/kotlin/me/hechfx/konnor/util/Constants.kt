@@ -2,7 +2,6 @@ package me.hechfx.konnor.util
 
 import dev.kord.common.Color
 import dev.kord.rest.service.RestClient
-import io.ktor.client.*
 import net.perfectdreams.discordinteraktions.common.entities.User
 
 object Constants {

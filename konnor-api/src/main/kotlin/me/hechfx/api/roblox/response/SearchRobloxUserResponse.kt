@@ -1,4 +1,4 @@
-package me.hechfx.api.roblox.structure
+package me.hechfx.api.roblox.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,5 +18,19 @@ data class SearchRobloxUserResponse(
         val name: String,
         val displayName: String,
         val previousUsernames: List<String>
+    )
+
+    @Serializable
+    data class RobloxUser(
+        @SerialName("id")
+        val userId: Long,
+        val name: String,
+        val displayName: String,
+        val description: String,
+        @SerialName("created")
+        val createdAt: String,
+        val isBanned: Boolean,
+        @SerialName("externalAppDisplayName")
+        val externalDisplayName: String? = null
     )
 }

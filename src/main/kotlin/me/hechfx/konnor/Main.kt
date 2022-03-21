@@ -32,6 +32,9 @@ object Main {
                     "konnor",
                     "postgres",
                     "youshallnotpass"
+                ),
+                DiscordConfig.ValorantConfig(
+                    "cool-api-key-here"
                 )
             )
 
