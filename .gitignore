@@ -1,3 +1,5 @@
 /.idea
 /.gradle
 /build
+/konnor-api/.gradle
+/konnor-api/build
