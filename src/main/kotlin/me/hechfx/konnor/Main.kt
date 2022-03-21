@@ -3,8 +3,6 @@ package me.hechfx.konnor
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.hocon.Hocon
 import me.hechfx.konnor.config.DiscordConfig
-import me.hechfx.konnor.config.KonnorConfig
-import me.hechfx.konnor.config.DatabaseConfig
 import me.hechfx.konnor.database.DatabaseService
 import me.hechfx.konnor.structure.Konnor
 import me.hechfx.konnor.util.GeneralUtils.decodeFromFile
@@ -24,11 +22,11 @@ object Main {
             }
         } else {
             val content = DiscordConfig(
-                KonnorConfig(
+                DiscordConfig.KonnorConfig(
                     "insert your token here",
                     123L
                 ),
-                DatabaseConfig(
+                DiscordConfig.DatabaseConfig(
                     "localhost",
                     "5432",
                     "konnor",
