@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-hocon:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 
     implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.12-20220319.161935-20")
     implementation("dev.kord:kord-common:0.8.x-20220315.083129-149")

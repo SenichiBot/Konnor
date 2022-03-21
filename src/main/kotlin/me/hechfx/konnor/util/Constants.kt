@@ -7,7 +7,6 @@ import net.perfectdreams.discordinteraktions.common.entities.User
 
 object Constants {
     val DEFAULT_COLOR = Color(252, 123, 3)
-    val http = HttpClient()
 
     suspend fun buildBadges(user: User, rest: RestClient): String {
         val u = rest.user.getUser(user.id)

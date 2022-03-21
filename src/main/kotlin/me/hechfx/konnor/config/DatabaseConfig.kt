@@ -1,4 +1,4 @@
-package me.hechfx.konnor.config.database
+package me.hechfx.konnor.config
 
 import kotlinx.serialization.Serializable
 

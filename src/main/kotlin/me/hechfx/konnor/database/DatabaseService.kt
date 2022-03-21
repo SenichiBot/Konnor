@@ -2,15 +2,14 @@ package me.hechfx.konnor.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import me.hechfx.konnor.config.database.DatabaseConfig
+import me.hechfx.konnor.config.DatabaseConfig
 import me.hechfx.konnor.database.table.Users
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
-object PostgreSQL {
-    fun startDatabase(databaseConfig: DatabaseConfig) {
+object DatabaseService {
+    fun connect(databaseConfig: DatabaseConfig) {
         val config = HikariConfig().apply {
             jdbcUrl = "jdbc:postgresql://${databaseConfig.host}:${databaseConfig.port}/${databaseConfig.database}?useTimezone=true&serverTimezone=UTC"
             driverClassName = "org.postgresql.Driver"

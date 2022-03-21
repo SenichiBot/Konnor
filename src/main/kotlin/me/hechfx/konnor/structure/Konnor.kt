@@ -4,16 +4,13 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.gateway.DefaultGateway
 import dev.kord.gateway.start
 import dev.kord.rest.service.RestClient
-import me.hechfx.konnor.command.economy.SoulsCheckCommandExecutor
-import me.hechfx.konnor.command.economy.SoulsCommand
-import me.hechfx.konnor.command.misc.PingCommand
-import me.hechfx.konnor.command.misc.PingCommandExecutor
-import me.hechfx.konnor.command.social.ProfileCheckCommandExecutor
-import me.hechfx.konnor.command.social.ProfileCommand
-import me.hechfx.konnor.command.social.ProfilePronounCommandExecutor
+import me.hechfx.konnor.command.`fun`.*
+import me.hechfx.konnor.command.economy.*
+import me.hechfx.konnor.command.misc.*
+import me.hechfx.konnor.command.social.*
 import me.hechfx.konnor.command.social.button.*
-import me.hechfx.konnor.command.social.menu.PronounsMenuExecutor
-import me.hechfx.konnor.command.social.modal.SubmitAboutMeChangesModalExecutor
+import me.hechfx.konnor.command.social.menu.*
+import me.hechfx.konnor.command.social.modal.*
 import me.hechfx.konnor.config.DiscordConfig
 import me.hechfx.konnor.database.task.ResetDailyTask
 import net.perfectdreams.discordinteraktions.common.commands.CommandManager
@@ -52,6 +49,9 @@ class Konnor(val config: DiscordConfig) {
     }
 
     private fun loadCommands(commandManager: CommandManager) {
+        //==[ Fun ]==
+        commandManager.register(RobloxCommand, RobloxUserCommandExecutor())
+
         // ==[ Misc ]==
         commandManager.register(PingCommand, PingCommandExecutor(this))
 

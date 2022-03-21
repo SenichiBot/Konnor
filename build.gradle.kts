@@ -17,6 +17,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":konnor-api"))
+
     // ==[ "Failed to load class org.slf4j.impl.StaticLoggerBinder" And shit ]==
     implementation("org.slf4j:slf4j-simple:1.7.36")
 

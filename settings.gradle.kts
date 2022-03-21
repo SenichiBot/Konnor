@@ -1,3 +1,2 @@
-
-rootProject.name = "konnor-slash"
-include("konnor-api")
+rootProject.name = "konnor-parent"
+include(":konnor-api")

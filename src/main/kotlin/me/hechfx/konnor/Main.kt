@@ -2,12 +2,10 @@ package me.hechfx.konnor
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
-import kotlinx.serialization.hocon.encodeToConfig
 import me.hechfx.konnor.config.DiscordConfig
 import me.hechfx.konnor.config.KonnorConfig
-import me.hechfx.konnor.config.database.DatabaseConfig
-import me.hechfx.konnor.database.PostgreSQL
+import me.hechfx.konnor.config.DatabaseConfig
+import me.hechfx.konnor.database.DatabaseService
 import me.hechfx.konnor.structure.Konnor
 import me.hechfx.konnor.util.GeneralUtils.decodeFromFile
 import me.hechfx.konnor.util.GeneralUtils.encodeToString
@@ -20,7 +18,7 @@ object Main {
 
         if (configFile.exists()) {
             val config: DiscordConfig = Hocon.decodeFromFile(configFile)
-            PostgreSQL.startDatabase(config.databaseConfig)
+            DatabaseService.connect(config.databaseConfig)
             runBlocking {
                 Konnor(config).start()
             }
