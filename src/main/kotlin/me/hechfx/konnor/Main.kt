@@ -36,7 +36,7 @@ object Main {
                     "postgres",
                     "youshallnotpass"
                 ),
-                DiscordConfig.ValorantConfig(
+                DiscordConfig.RiotConfig(
                     "cool-api-key-here"
                 )
             )

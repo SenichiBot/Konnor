@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class DiscordConfig (
     val konnorConfig: KonnorConfig,
     val databaseConfig: DatabaseConfig,
-    val valorantConfig: ValorantConfig
+    val riotConfig: RiotConfig
 ) {
     @Serializable
     data class KonnorConfig(
@@ -24,7 +24,7 @@ data class DiscordConfig (
     )
 
     @Serializable
-    data class ValorantConfig(
+    data class RiotConfig(
         val apiKey: String
     )
 }
