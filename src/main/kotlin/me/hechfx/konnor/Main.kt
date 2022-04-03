@@ -24,29 +24,26 @@ object Main {
             }
         } else {
             logger.info { "Trying to create a new config file..." }
-            val content = DiscordConfig(
-                DiscordConfig.KonnorConfig(
-                    "insert your token here",
-                    123L
-                ),
-                DiscordConfig.DatabaseConfig(
-                    "localhost",
-                    "5432",
-                    "konnor",
-                    "postgres",
-                    "youshallnotpass"
-                ),
-                DiscordConfig.RiotConfig(
-                    "cool-api-key-here"
-                )
-            )
-            logger.info("Trying to encode raw config to String...")
-            val decodedConfig = Hocon.encodeToConfig(content)
+            val content = """
+                konnorConfig {
+                    token = "insert your token here"
+                    applicationId = 123
+                    owners = [1, 2]
+                }
+                databaseConfig {
+                    host = "localhost"
+                    port = "5432"
+                    database = "konnor"
+                    user = "postgres"
+                    password = "youshallnotpass"
+                }
+                
+                riotConfig = {
+                    apiKey = "cool api key here"
+                }
+            """.trimIndent()
 
-            val result: String = Hocon.decodeFromConfig(decodedConfig)
-            logger.info(result)
-
-            configFile.writeBytes(result.toByteArray())
+            configFile.writeBytes(content.toByteArray())
 
             throw Exception("Cannot retrieve the config file, generating a new one...")
         }

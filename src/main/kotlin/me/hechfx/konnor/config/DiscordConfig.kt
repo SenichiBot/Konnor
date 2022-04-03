@@ -11,7 +11,8 @@ data class DiscordConfig (
     @Serializable
     data class KonnorConfig(
         val token: String,
-        val applicationId: Long
+        val applicationId: Long,
+        val owners: List<Long>
     )
 
     @Serializable

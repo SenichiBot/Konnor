@@ -2,6 +2,7 @@ package me.hechfx.konnor.command.social
 
 import dev.kord.common.Color
 import dev.kord.common.entity.ButtonStyle
+import kotlinx.datetime.Clock
 import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import me.hechfx.konnor.util.Constants.buildBadges
 import me.hechfx.konnor.command.social.button.ChangeAboutMeButtonExecutor
@@ -59,7 +60,7 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                     Color(profileColor.red, profileColor.green, profileColor.blue)
                 }
 
-                if (profile.premium) {
+                if (profile.premium && profile.premiumType != null && profile.premiumDuration != null) {
                     field {
                         name = when (profile.premiumType) {
                             1 -> "VIP"
@@ -68,7 +69,7 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                             else -> ""
                         }
                         inline = true
-                        value = "Vip will end: <t:${profile.premiumDuration?.epochSecond}:R>"
+                        value = "Vip will end: <t:${profile.premiumDuration!!.epochSecond}:R>"
                     }
                 }
 

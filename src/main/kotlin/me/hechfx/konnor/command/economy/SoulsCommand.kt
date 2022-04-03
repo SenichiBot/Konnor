@@ -121,7 +121,7 @@ class SoulsPayCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
 
                 color = DEFAULT_COLOR
                 title = "Incoming Transaction"
-                description = "You want to transfer ${if (args[options.quantity] == 1L) "${args[options.quantity]} Soul" else "${args[options.quantity]} Souls"} to <@${args[options.user].id.value}>\n\n**Is it right?**"
+                description = "You want to transfer ${if (args[options.quantity] == 1L) "${args[options.quantity]} Soul" else "${args[options.quantity]} Souls"} to <@${args[options.user].id.value}>\n\n**Is that right?**"
             }
 
             actionRow {
@@ -211,12 +211,12 @@ class SoulsDailyCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
             }
 
             actionRow {
-                if (Clock.System.now().toEpochMilliseconds() <= authorProfile.dailyTimeout!!.toEpochMilli()) {
+                if (authorProfile.dailyTimeout != null && Clock.System.now().toEpochMilliseconds() <= authorProfile.dailyTimeout!!.toEpochMilli()) {
                     interactiveButton(ButtonStyle.Success, GetDailyButtonExecutor, "${context.sender.id.value}") {
                         label = "Get Daily"
                         disabled = true
                     }
-                } else if (authorProfile.dailyTimeout == null || Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli()){
+                } else if (authorProfile.dailyTimeout == null || (authorProfile.dailyTimeout != null && Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli())){
                     interactiveButton(ButtonStyle.Success, GetDailyButtonExecutor, "${context.sender.id.value}") {
                         label = "Get Daily"
                     }

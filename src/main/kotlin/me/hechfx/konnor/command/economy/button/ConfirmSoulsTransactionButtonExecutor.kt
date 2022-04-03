@@ -29,7 +29,7 @@ class ConfirmSoulsTransactionButtonExecutor: ButtonClickWithDataExecutor {
                 }
 
                 title = "Incoming Transaction"
-                description = "You are about to transfer ${if (quantity == 1L) "$quantity Soul" else "$quantity Souls"} to <@${target.value}>.\n\n**Is that right?**"
+                description = "You are about to transfer ${if (quantity == 1L) "$quantity Soul" else "$quantity Souls"} to <@${target.value}>.\n\n**Successfully transferred**"
             }
 
             components = mutableListOf()

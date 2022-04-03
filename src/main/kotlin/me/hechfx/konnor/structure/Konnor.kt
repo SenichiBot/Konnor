@@ -3,9 +3,16 @@ package me.hechfx.konnor.structure
 import dev.kord.common.entity.DiscordShard
 import dev.kord.common.entity.Snowflake
 import dev.kord.gateway.DefaultGateway
+import dev.kord.gateway.Ready
+import dev.kord.gateway.on
 import dev.kord.gateway.start
 import dev.kord.rest.service.RestClient
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import me.hechfx.konnor.command.`fun`.*
+import me.hechfx.konnor.command.dev.OwnerCommand
+import me.hechfx.konnor.command.dev.OwnerSetVipCommandExecutor
 import me.hechfx.konnor.command.economy.*
 import me.hechfx.konnor.command.economy.button.ConfirmSoulsTransactionButtonExecutor
 import me.hechfx.konnor.command.economy.button.DenySoulsTransactionButtonExecutor
@@ -19,11 +26,18 @@ import me.hechfx.konnor.command.social.button.*
 import me.hechfx.konnor.command.social.menu.*
 import me.hechfx.konnor.command.social.modal.*
 import me.hechfx.konnor.config.DiscordConfig
+import me.hechfx.konnor.database.table.Users
 import me.hechfx.konnor.database.task.ResetDailyTask
 import me.hechfx.konnor.database.task.ResetVipTask
+import me.hechfx.konnor.util.GeneralUtils.logger
 import net.perfectdreams.discordinteraktions.common.commands.CommandManager
 import net.perfectdreams.discordinteraktions.platforms.kord.commands.KordCommandRegistry
 import net.perfectdreams.discordinteraktions.platforms.kord.installDiscordInteraKTions
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.update
+import java.time.Instant
+import java.util.logging.Logger
 import kotlin.random.Random
 
 class Konnor(val config: DiscordConfig) {
@@ -56,6 +70,10 @@ class Konnor(val config: DiscordConfig) {
             commandManager
         )
 
+        gateway.on<Ready> {
+            logger.info { "Connected ${data.shard.value?.count} Shards of ${data.user.username}#${data.user.discriminator} to Discord's WebSocket" }
+        }
+
         /**
          * gateway.on<GuildCreate> {
                 val owner = client.user.getUser(guild.ownerId)
@@ -69,17 +87,35 @@ class Konnor(val config: DiscordConfig) {
             }
          */
 
+        // ==[ Reset ]==
+        GlobalScope.launch {
+            newSuspendedTransaction {
+                Users.update({ Users.premiumDuration lessEq Instant.now() }) {
+                    it[premium] = false
+                    it[premiumType] = null
+                    it[premiumDuration] = null
+                }
+
+                Users.update({ Users.dailyTimeout lessEq Instant.now() }) {
+                    it[dailyTimeout] = null
+                }
+            }
+        }
+
         gateway.start(config.konnorConfig.token) {
-            shard = DiscordShard(0, 2)
             presence {
                 playing("Hello World!")
             }
         }
-        ResetDailyTask().run()
-        ResetVipTask().run()
     }
 
     private fun loadCommands(commandManager: CommandManager) {
+        // ==[ Owners ]==
+        commandManager.register(
+            OwnerCommand,
+            OwnerSetVipCommandExecutor(this)
+        )
+
         // ==[ Minecraft ]==
         commandManager.register(
             MinecraftCommand,

@@ -2,6 +2,7 @@ package me.hechfx.konnor.command.economy.button
 
 import kotlinx.datetime.Clock
 import me.hechfx.konnor.structure.Konnor
+import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import me.hechfx.konnor.util.Constants.ONE_DAY_IN_MILLISECONDS
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
 import net.perfectdreams.discordinteraktions.common.components.ButtonClickExecutorDeclaration
@@ -32,17 +33,19 @@ class GetDailyButtonExecutor : ButtonClickWithDataExecutor {
 
         context.updateMessage {
             embed {
+                color = DEFAULT_COLOR
                 title = "Your Daily Status"
-                description = "You can get your daily: ${if (authorProfile.dailyTimeout == null || Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli()) "**Now**" else "<t:${authorProfile.dailyTimeout!!.epochSecond}:R>"}"
+                description = "You successfully received $quantity Souls from Daily!"
             }
+
             components = mutableListOf()
         }
 
-        if (Clock.System.now().toEpochMilliseconds() <= authorProfile.dailyTimeout?.toEpochMilli()!!) {
+        if (authorProfile.dailyTimeout != null && Clock.System.now().toEpochMilliseconds() <= authorProfile.dailyTimeout?.toEpochMilli()!!) {
             context.sendEphemeralMessage {
                 content = "You can't get your daily right now! You can get your daily: <t:${authorProfile.dailyTimeout!!.epochSecond}:R>"
             }
-        } else if (authorProfile.dailyTimeout == null || Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli()){
+        } else if (authorProfile.dailyTimeout == null || (authorProfile.dailyTimeout != null && Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli())){
             newSuspendedTransaction {
                 authorProfile.coins += quantity
                 authorProfile.dailyTimeout = Instant.ofEpochMilli(Clock.System.now().toEpochMilliseconds() + ONE_DAY_IN_MILLISECONDS)
