@@ -1,23 +1,46 @@
 package me.hechfx.konnor.command.economy
 
+import dev.kord.common.entity.ButtonStyle
+import dev.kord.common.entity.Snowflake
+import kotlinx.datetime.Clock
+import me.hechfx.konnor.command.economy.button.ConfirmSoulsTransactionButtonExecutor
+import me.hechfx.konnor.command.economy.button.DenySoulsTransactionButtonExecutor
+import me.hechfx.konnor.command.economy.button.GetDailyButtonExecutor
 import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import me.hechfx.konnor.database.dao.User
+import me.hechfx.konnor.database.table.Users
 import me.hechfx.konnor.structure.Konnor
+import net.perfectdreams.discordinteraktions.common.builder.message.actionRow
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
 import net.perfectdreams.discordinteraktions.common.commands.*
 import net.perfectdreams.discordinteraktions.common.commands.options.ApplicationCommandOptions
 import net.perfectdreams.discordinteraktions.common.commands.options.SlashCommandArguments
+import net.perfectdreams.discordinteraktions.common.components.interactiveButton
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 object SoulsCommand: SlashCommandDeclarationWrapper {
     override fun declaration() = slashCommand("souls", "Commands that have Souls involved.") {
-        subcommand("check", "Check how many souls you have") {
+        subcommand("check", "Check how many Souls you have") {
             executor = SoulsCheckCommandExecutor
+        }
+
+        subcommand("pay", "Pay or donate to someone with Souls") {
+            executor = SoulsPayCommandExecutor
+        }
+
+        subcommand("top", "See users' Soul ranking") {
+            executor = SoulsTopCommandExecutor
+        }
+
+        subcommand("daily", "Get your daily Souls") {
+            executor = SoulsDailyCommandExecutor
         }
     }
 }
 
-class SoulsCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
+class SoulsCheckCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
     companion object : SlashCommandExecutorDeclaration(SoulsCheckCommandExecutor::class) {
         object Options: ApplicationCommandOptions() {
             val user = optionalUser("user", "Check how many Souls a specific user have").register()
@@ -42,7 +65,7 @@ class SoulsCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                     field {
                         name = "Daily"
                         inline = false
-                        value = "You can get your daily: ${if (profile.dailyTimeout == null) "**Now**" else "<t:${profile.dailyTimeout?.epochSecond}:R>"}"
+                        value = "You can get your daily: ${if (profile.dailyTimeout == null) "**Now**" else "<t:${profile.dailyTimeout!!.epochSecond}:R>"}"
                     }
                 }
             }
@@ -59,6 +82,143 @@ class SoulsCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                         }
                     } else {
                         description = "${profile.pronoun!!.split("/")[0]} has **${profile.coins}** ${if (profile.coins == 1L) "Soul" else "Souls"}"
+                    }
+                }
+            }
+        }
+    }
+}
+
+class SoulsPayCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(SoulsPayCommandExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions() {
+            val user = user("user", "user to pay or donate souls")
+                .register()
+            val quantity = integer("quantity", "how many souls you want to pay or donate")
+                .register()
+        }
+
+        override val options = CommandOptions
+    }
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        val authorProfile = newSuspendedTransaction {
+            User[context.sender.id.value.toLong()]
+        }
+
+        if (authorProfile.coins < args[options.quantity]) {
+            context.sendMessage {
+                content = "You don't have ${args[options.quantity]} Souls to transfer!"
+            }
+            return
+        }
+
+        context.sendMessage {
+            embed {
+                thumbnail {
+                    url = "https://cdn.discordapp.com/emojis/957371616864641034.png"
+                }
+
+                color = DEFAULT_COLOR
+                title = "Incoming Transaction"
+                description = "You want to transfer ${if (args[options.quantity] == 1L) "${args[options.quantity]} Soul" else "${args[options.quantity]} Souls"} to <@${args[options.user].id.value}>\n\n**Is it right?**"
+            }
+
+            actionRow {
+                interactiveButton(ButtonStyle.Success, ConfirmSoulsTransactionButtonExecutor, "${context.sender.id.value}:${args[options.user].id.value}:${args[options.quantity]}") {
+                    label = "Yes"
+                }
+
+                interactiveButton(ButtonStyle.Danger, DenySoulsTransactionButtonExecutor, "${context.sender.id.value}") {
+                    label = "No"
+                }
+            }
+        }
+    }
+}
+
+class SoulsTopCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(SoulsTopCommandExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions() {
+            val page = optionalInteger("page", "select a page to show")
+                .register()
+        }
+
+        override val options = CommandOptions
+    }
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        var pg = args[options.page]
+
+        if (pg == null) {
+            pg = 0
+        } else {
+            pg -= 1
+        }
+
+        context.deferChannelMessage()
+
+        val users = newSuspendedTransaction {
+            Users.selectAll()
+                .orderBy(Users.coins, SortOrder.DESC)
+                .limit(10, pg * 10)
+                .toMutableList()
+        }
+
+        var string = ""
+
+        for (e in users) {
+            string += "\uD83D\uDD38 | ${konnor.client.user.getUser(Snowflake(e[Users.id].value.toString())).username}#${konnor.client.user.getUser(Snowflake(e[Users.id].value.toString())).discriminator} (`${e[Users.id].value}`) — ${if (e[Users.coins] == 1L) "${e[Users.coins]} Soul" else "${e[Users.coins]} Souls"}\n"
+        }
+
+        context.sendMessage {
+            embed {
+                title = "Souls Ranking"
+                description = string
+                color = DEFAULT_COLOR
+            }
+        }
+    }
+}
+
+class SoulsDailyCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(SoulsDailyCommandExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions()
+
+        override val options = CommandOptions
+    }
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        val authorProfile = newSuspendedTransaction {
+            User.getOrInsert(context.sender.id.value.toLong())
+        }
+
+        context.sendMessage {
+            embed {
+                color = DEFAULT_COLOR
+                title = "Your Daily Status"
+                description = "You can get your daily: ${if (authorProfile.dailyTimeout == null || Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli()) "**Now**" else "<t:${authorProfile.dailyTimeout!!.epochSecond}:R>"}"
+                if (authorProfile.premium && authorProfile.premiumType != null) {
+                    field {
+                        name = when (authorProfile.premiumType!!) {
+                            1 -> "VIP"
+                            2 -> "VIP+"
+                            3 -> "VIP++"
+                            else -> { "None" }
+                        }
+                        value = "You can get more Souls in the daily because of your VIP!"
+                    }
+                }
+            }
+
+            actionRow {
+                if (Clock.System.now().toEpochMilliseconds() <= authorProfile.dailyTimeout!!.toEpochMilli()) {
+                    interactiveButton(ButtonStyle.Success, GetDailyButtonExecutor, "${context.sender.id.value}") {
+                        label = "Get Daily"
+                        disabled = true
+                    }
+                } else if (authorProfile.dailyTimeout == null || Clock.System.now().toEpochMilliseconds() >= authorProfile.dailyTimeout!!.toEpochMilli()){
+                    interactiveButton(ButtonStyle.Success, GetDailyButtonExecutor, "${context.sender.id.value}") {
+                        label = "Get Daily"
                     }
                 }
             }

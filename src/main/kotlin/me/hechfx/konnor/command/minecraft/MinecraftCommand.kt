@@ -41,8 +41,12 @@ class MinecraftUserCommandExecutor : SlashCommandExecutor() {
         } else {
             context.sendMessage {
                 embed {
+                    thumbnail {
+                        url = "https://cdn.discordapp.com/emojis/957356545203638282.png"
+                    }
                     title = if (user.username.endsWith("s")) "${user.username}' information" else "${user.username}'s information"
                     color = DEFAULT_COLOR
+                    description = "[Click here](https://crafatar.com/skins/${user.uuid}) to download this user's skin."
                     field {
                         name = "UUID"
                         inline = false
@@ -52,8 +56,10 @@ class MinecraftUserCommandExecutor : SlashCommandExecutor() {
                     field {
                         name = "Name History"
                         inline = false
-                        value = user.nameHistory.joinToString(", ") { "${it.name} — ${it.changedAt}" }
+                        value = user.nameHistory.joinToString("\n") { "**${it.name}** — ${it.changedAt}" }
                     }
+
+                    image = "https://crafatar.com/renders/body/${user.uuid}"
                 }
             }
         }

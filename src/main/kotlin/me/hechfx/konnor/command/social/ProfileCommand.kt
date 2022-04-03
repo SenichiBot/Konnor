@@ -93,7 +93,7 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                 }
 
                 thumbnail {
-                    url = user.avatar.url
+                    url = user.avatar.cdnUrl.toUrl()
                 }
             }
 

@@ -9,7 +9,9 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 class User(id: EntityID<Long>): LongEntity(id) {
     companion object : LongEntityClass<User>(Users) {
         fun getOrInsert(id: Long): User {
-            return User.findById(id) ?: User.new(id) {}
+            return User.findById(id) ?: User.new(id) {
+
+            }
         }
     }
 
