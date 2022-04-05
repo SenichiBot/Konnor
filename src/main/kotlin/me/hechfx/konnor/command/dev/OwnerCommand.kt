@@ -15,6 +15,14 @@ object OwnerCommand : SlashCommandDeclarationWrapper {
         subcommand("vip", "Set vip to someone.") {
             executor = OwnerSetVipCommandExecutor
         }
+
+        subcommand("souls_remove", "Remove souls from a user.") {
+            executor = OwnerSoulsRemoveExecutor
+        }
+
+        subcommand("souls_add", "Add souls to a user.") {
+            executor = OwnerSoulsAddExecutor
+        }
     }
 }
 
@@ -50,6 +58,64 @@ class OwnerSetVipCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
 
         context.sendEphemeralMessage {
             content = "Giving ${args[options.type]} VIP to <@${args[options.target].id.value}> for ${args[options.days]} Days"
+        }
+    }
+}
+
+class OwnerSoulsRemoveExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(OwnerSoulsRemoveExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions() {
+            val target = user("target", "the user target.")
+                .register()
+            val amount = integer("amount", "the amount to be removed.")
+                .register()
+        }
+
+        override val options = CommandOptions
+    }
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        if (!konnor.config.konnorConfig.owners.contains(context.sender.id.value.toLong())) return
+
+        val targetProfile = newSuspendedTransaction {
+            User.getOrInsert(args[options.target].id.value.toLong())
+        }
+
+        newSuspendedTransaction {
+            targetProfile.coins -= args[options.amount]
+        }
+
+        context.sendEphemeralMessage {
+            content = "Removing ${args[options.amount]} Souls from <@${args[options.target].id.value}>!"
+        }
+    }
+}
+
+class OwnerSoulsAddExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(OwnerSoulsAddExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions() {
+            val target = user("target", "the user target")
+                .register()
+            val amount = integer("amount", "souls to remove")
+                .register()
+        }
+
+        override val options = CommandOptions
+    }
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        if (!konnor.config.konnorConfig.owners.contains(context.sender.id.value.toLong())) return
+
+        val targetProfile = newSuspendedTransaction {
+            User.getOrInsert(args[options.target].id.value.toLong())
+        }
+
+        newSuspendedTransaction {
+            targetProfile.coins += args[options.amount]
+        }
+
+        context.sendEphemeralMessage {
+            content = "Adding ${args[OwnerSoulsRemoveExecutor.options.amount]} Souls to <@${args[OwnerSoulsRemoveExecutor.options.target].id.value}>!"
         }
     }
 }
