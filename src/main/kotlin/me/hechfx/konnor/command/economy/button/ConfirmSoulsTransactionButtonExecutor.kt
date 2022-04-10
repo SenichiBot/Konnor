@@ -1,8 +1,6 @@
 package me.hechfx.konnor.command.economy.button
 
 import dev.kord.common.entity.Snowflake
-import me.hechfx.konnor.command.economy.SoulsPayCommandExecutor
-import me.hechfx.konnor.util.Constants
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
 import net.perfectdreams.discordinteraktions.common.components.ButtonClickExecutorDeclaration
 import net.perfectdreams.discordinteraktions.common.components.ButtonClickWithDataExecutor

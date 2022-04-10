@@ -1,6 +1,5 @@
 package me.hechfx.konnor.command.economy.button
 
-import dev.kord.common.entity.DiscordUser
 import dev.kord.common.entity.Snowflake
 import me.hechfx.konnor.structure.Konnor
 import net.perfectdreams.discordinteraktions.common.builder.message.embed

@@ -2,7 +2,6 @@ package me.hechfx.konnor.command.social
 
 import dev.kord.common.Color
 import dev.kord.common.entity.ButtonStyle
-import kotlinx.datetime.Clock
 import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import me.hechfx.konnor.util.Constants.buildBadges
 import me.hechfx.konnor.command.social.button.ChangeAboutMeButtonExecutor
