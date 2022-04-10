@@ -23,10 +23,10 @@ class GetDailyButtonExecutor : ButtonClickWithDataExecutor {
         }
 
         val quantity = when (authorProfile.premiumType) {
-            1 -> Konnor.random.nextLong(3000, 5000)
-            2 -> Konnor.random.nextLong(3000, 7000)
-            3 -> Konnor.random.nextLong(3000, 9000)
-            else -> Konnor.random.nextLong(1200, 3000)
+            1 -> Konnor.random.nextLong(3000L, 5000L)
+            2 -> Konnor.random.nextLong(3000L, 7000L)
+            3 -> Konnor.random.nextLong(3000L, 9000L)
+            else -> Konnor.random.nextLong(1200L, 3000L)
         }
 
         context.deferUpdateMessage()

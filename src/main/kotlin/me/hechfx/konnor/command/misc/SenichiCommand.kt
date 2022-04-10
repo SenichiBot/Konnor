@@ -30,12 +30,12 @@ class BotPingCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
     override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
         val ms = System.currentTimeMillis()
         val msg = context.sendMessage {
-            content = "**API**: `...` | **BOT**: `${konnor.gateway.ping.value}`"
+            content = "**API**: `...` | **BOT**: `${konnor.client.gateway.averagePing}`"
         }
 
         msg.editMessage {
             val diff = (System.currentTimeMillis() - ms)
-            content = "**API**: `${diff}ms` | **BOT**: `${konnor.gateway.ping.value}`"
+            content = "**API**: `${diff}ms` | **BOT**: `${konnor.client.gateway.averagePing}`"
         }
     }
 }

@@ -1,6 +1,7 @@
 package me.hechfx.konnor.command.`fun`
 
 import me.hechfx.api.roblox.RobloxInstance
+import me.hechfx.api.roblox.response.SearchRobloxUserResponse
 import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
 import net.perfectdreams.discordinteraktions.common.commands.*
@@ -28,8 +29,15 @@ class RobloxUserCommandExecutor : SlashCommandExecutor() {
 
     override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
         val robloxInstance = RobloxInstance()
-        val query = robloxInstance.searchUser(args[options.user]).data[0]
-        val robloxUser = robloxInstance.fetchUser(query.userId)
+        val query = robloxInstance.searchUser(args[options.user]).data.getOrNull(0)
+        lateinit var robloxUser: SearchRobloxUserResponse.RobloxUser
+        if (query != null) {
+            robloxUser = robloxInstance.fetchUser(query.userId)
+        } else {
+            context.sendMessage {
+                content = "User not found!"
+            }
+        }
 
         context.sendMessage {
             embed {

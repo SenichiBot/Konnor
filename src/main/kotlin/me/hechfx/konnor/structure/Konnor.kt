@@ -1,25 +1,20 @@
 package me.hechfx.konnor.structure
 
+import dev.kord.common.entity.DiscordUser
 import dev.kord.common.entity.Snowflake
+import dev.kord.core.Kord
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.guild.GuildCreateEvent
+import dev.kord.core.on
 import dev.kord.gateway.DefaultGateway
-import dev.kord.gateway.Ready
-import dev.kord.gateway.on
-import dev.kord.gateway.start
-import dev.kord.rest.service.RestClient
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import me.hechfx.konnor.command.`fun`.*
-import me.hechfx.konnor.command.dev.OwnerCommand
-import me.hechfx.konnor.command.dev.OwnerSetVipCommandExecutor
-import me.hechfx.konnor.command.dev.OwnerSoulsAddExecutor
-import me.hechfx.konnor.command.dev.OwnerSoulsRemoveExecutor
+import me.hechfx.konnor.command.dev.*
 import me.hechfx.konnor.command.economy.*
-import me.hechfx.konnor.command.economy.button.ConfirmSoulsTransactionButtonExecutor
-import me.hechfx.konnor.command.economy.button.DenySoulsTransactionButtonExecutor
-import me.hechfx.konnor.command.economy.button.GetDailyButtonExecutor
-import me.hechfx.konnor.command.minecraft.MinecraftCommand
-import me.hechfx.konnor.command.minecraft.MinecraftServerCommandExecutor
-import me.hechfx.konnor.command.minecraft.MinecraftUserCommandExecutor
+import me.hechfx.konnor.command.economy.button.*
+import me.hechfx.konnor.command.minecraft.*
 import me.hechfx.konnor.command.misc.*
 import me.hechfx.konnor.command.social.*
 import me.hechfx.konnor.command.social.button.*
@@ -27,61 +22,52 @@ import me.hechfx.konnor.command.social.menu.*
 import me.hechfx.konnor.command.social.modal.*
 import me.hechfx.konnor.config.DiscordConfig
 import me.hechfx.konnor.database.table.Users
-import me.hechfx.konnor.util.GeneralUtils.logger
 import net.perfectdreams.discordinteraktions.common.commands.CommandManager
 import net.perfectdreams.discordinteraktions.platforms.kord.commands.KordCommandRegistry
 import net.perfectdreams.discordinteraktions.platforms.kord.installDiscordInteraKTions
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import java.security.SecureRandom
 import java.time.Instant
-import kotlin.random.Random
+import kotlin.random.asKotlinRandom
 
 class Konnor(val config: DiscordConfig) {
-    lateinit var client: RestClient
-    lateinit var gateway: DefaultGateway
+    lateinit var client: Kord
 
     companion object {
-        val random = Random(0L)
+        val random = SecureRandom().asKotlinRandom()
         val commandManager = CommandManager()
+    }
+
+    suspend fun retrieveUser(snowflake: Snowflake): DiscordUser {
+        return this.client.rest.user.getUser(snowflake)
     }
 
     suspend fun start() {
         val applicationId = Snowflake(config.konnorConfig.applicationId)
-        client = RestClient(config.konnorConfig.token)
-        gateway = DefaultGateway {}
+        client = Kord(config.konnorConfig.token)
 
         val registry = KordCommandRegistry(
             applicationId,
-            client,
+            client.rest,
             commandManager
         )
 
         loadCommands(commandManager)
 
-        registry.updateAllGlobalCommands(true)
-
-        gateway.installDiscordInteraKTions(
-            applicationId,
-            client,
-            commandManager
-        )
-
-        gateway.on<Ready> {
-            logger.info { "Connected ${data.shard.value?.count} Shards of ${data.user.username}#${data.user.discriminator} to Discord's WebSocket" }
+        client.gateway.gateways.forEach {
+            it.value.installDiscordInteraKTions(
+                applicationId,
+                client.rest,
+                commandManager
+            )
         }
 
-        /**
-         * gateway.on<GuildCreate> {
-                val owner = client.user.getUser(guild.ownerId)
-                val dm = client.user.createDM(DMCreateRequest(owner.id))
-                client.channel.createMessage(dm.id) {
-                    embed {
-                        title = "Hello, I'm Sen'ichi"
-                        description = "Hey ${owner.username}, how's going?\n\nThank you for adding me to you server (also called `${guild.name}` ^^)! If you need support just come by in [my server](https://discord.gg/Akw8UAd)!"
-                    }
-                }
-            }
-         */
+        client.on<ReadyEvent> {
+            println("Initializing Sen'ichi; ${client.guilds.toList().size} Servers.")
+        }
+
+        // TODO: Do a message when the user adds the bot to a server.
 
         // ==[ Reset ]==
         GlobalScope.launch {
@@ -98,7 +84,9 @@ class Konnor(val config: DiscordConfig) {
             }
         }
 
-        gateway.start(config.konnorConfig.token) {
+        registry.updateAllGlobalCommands(true)
+
+        client.login {
             presence {
                 playing("Hello World!")
             }
@@ -137,12 +125,14 @@ class Konnor(val config: DiscordConfig) {
             SoulsCheckCommandExecutor(this),
             SoulsPayCommandExecutor(this),
             SoulsTopCommandExecutor(this),
-            SoulsDailyCommandExecutor(this)
+            SoulsDailyCommandExecutor(this),
+            SoulsBetCommandExecutor(this)
         )
         // ==[ Economy Components ]==
             commandManager.register(ConfirmSoulsTransactionButtonExecutor, ConfirmSoulsTransactionButtonExecutor())
             commandManager.register(DenySoulsTransactionButtonExecutor, DenySoulsTransactionButtonExecutor())
             commandManager.register(GetDailyButtonExecutor, GetDailyButtonExecutor())
+            commandManager.register(AcceptSoulsGamblingTransactionButtonExecutor, AcceptSoulsGamblingTransactionButtonExecutor(this))
 
         // ==[ Social }
         commandManager.register(

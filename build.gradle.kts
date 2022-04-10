@@ -23,10 +23,9 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:1.7.36")
 
     // ==[ Discord ]==
-    implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.12-20220319.161935-20")
-    implementation("dev.kord:kord-common:0.8.x-20220315.083129-149")
-    implementation("dev.kord:kord-gateway:0.8.x-20220315.083129-149")
-    implementation("dev.kord:kord-rest:0.8.x-20220315.083129-149")
+    implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.12-SNAPSHOT")
+    implementation("dev.kord:kord-core:0.8.x-20220315.083129-149")
+
     // ==[ Database ]==
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("org.postgresql:postgresql:42.3.3")

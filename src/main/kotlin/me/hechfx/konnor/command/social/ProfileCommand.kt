@@ -73,12 +73,14 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
                     }
                 }
 
-                val badges = buildBadges(user, konnor.client)
+                val badges = buildBadges(user, konnor.client.rest)
 
-                field {
-                    name = "Badges"
-                    value = badges
-                    inline = true
+                if (badges != null) {
+                    field {
+                        name = "Badges"
+                        value = badges
+                        inline = true
+                    }
                 }
 
                 field {

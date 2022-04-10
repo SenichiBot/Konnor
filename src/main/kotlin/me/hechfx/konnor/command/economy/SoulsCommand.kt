@@ -3,6 +3,7 @@ package me.hechfx.konnor.command.economy
 import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.Snowflake
 import kotlinx.datetime.Clock
+import me.hechfx.konnor.command.economy.button.AcceptSoulsGamblingTransactionButtonExecutor
 import me.hechfx.konnor.command.economy.button.ConfirmSoulsTransactionButtonExecutor
 import me.hechfx.konnor.command.economy.button.DenySoulsTransactionButtonExecutor
 import me.hechfx.konnor.command.economy.button.GetDailyButtonExecutor
@@ -36,6 +37,10 @@ object SoulsCommand: SlashCommandDeclarationWrapper {
 
         subcommand("daily", "Get your daily Souls") {
             executor = SoulsDailyCommandExecutor
+        }
+
+        subcommand("bet", "Bet some Souls with a user") {
+            executor = SoulsBetCommandExecutor
         }
     }
 }
@@ -167,7 +172,7 @@ class SoulsTopCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
         var string = ""
 
         for (e in users) {
-            string += "\uD83D\uDD38 | ${konnor.client.user.getUser(Snowflake(e[Users.id].value.toString())).username}#${konnor.client.user.getUser(Snowflake(e[Users.id].value.toString())).discriminator} (`${e[Users.id].value}`) — ${if (e[Users.coins] == 1L) "${e[Users.coins]} Soul" else "${e[Users.coins]} Souls"}\n"
+            string += "\uD83D\uDD38 | ${konnor.retrieveUser(Snowflake(e[Users.id].value.toString())).username}#${konnor.retrieveUser(Snowflake(e[Users.id].value.toString())).discriminator} (`${e[Users.id].value}`) — ${if (e[Users.coins] == 1L) "${e[Users.coins]} Soul" else "${e[Users.coins]} Souls"}\n"
         }
 
         context.sendMessage {
@@ -220,6 +225,64 @@ class SoulsDailyCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
                     interactiveButton(ButtonStyle.Success, GetDailyButtonExecutor, "${context.sender.id.value}") {
                         label = "Get Daily"
                     }
+                }
+            }
+        }
+    }
+}
+
+class SoulsBetCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(SoulsBetCommandExecutor::class) {
+        object CommandOptions : ApplicationCommandOptions() {
+            val target = user("user", "user that you want to bet with")
+                .register()
+            val amount = integer("amount", "amount of souls that you want to bet")
+                .register()
+        }
+
+        override val options = CommandOptions
+    }
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        val authorProfile = newSuspendedTransaction {
+            User.getOrInsert(context.sender.id.value.toLong())
+        }
+
+        val targetProfile = newSuspendedTransaction {
+            User.getOrInsert(context.sender.id.value.toLong())
+        }
+
+        if (authorProfile.coins < args[options.amount]) {
+            context.sendMessage {
+                content = "You don't have Souls enough to bet."
+            }
+            return
+        }
+
+        if (targetProfile.coins < args[options.amount]) {
+            context.sendMessage {
+                content = "<@${args[options.target].id.value}> does not have enough Souls to bet."
+            }
+            return
+        }
+
+        context.sendMessage {
+            content = "<@${args[options.target].id.value}>"
+            embed {
+                thumbnail {
+                    url = "https://cdn.discordapp.com/emojis/957371616864641034.png"
+                }
+
+                color = DEFAULT_COLOR
+                title = "Gambling Souls"
+                description = "<@${context.sender.id.value}> wanna bet ${args[options.amount]} Souls with you!\n\n**Will you accept?**"
+            }
+            actionRow {
+                interactiveButton(ButtonStyle.Success, AcceptSoulsGamblingTransactionButtonExecutor, "${args[options.amount]}:${args[options.target].id.value}:${context.sender.id.value}") {
+                    label = "Yes"
+                }
+                interactiveButton(ButtonStyle.Danger, DenySoulsTransactionButtonExecutor, "${args[options.target].id.value}") {
+                    label = "No"
                 }
             }
         }
