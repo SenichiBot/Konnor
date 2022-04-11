@@ -14,13 +14,16 @@ repositories {
     // ==[ Kord && DiscordInteraktions repositories ]==
     maven("https://oss.sonatype.org/content/repositories/snapshots")
     maven("https://repo.perfectdreams.net/")
+
+    // ==[ Logback repository ]==
+    maven("https://mvnrepository.com/artifact/ch.qos.logback/logback-classic")
 }
 
 dependencies {
     implementation(project(":konnor-api"))
 
-    // ==[ "Failed to load class org.slf4j.impl.StaticLoggerBinder" And shit ]==
-    implementation("org.slf4j:slf4j-simple:1.7.36")
+    // ==[ "Failed to load class org.slf4j.impl.StaticLoggerBinder" ]==
+    implementation("ch.qos.logback:logback-classic:1.3.0-alpha14")
 
     // ==[ Discord ]==
     implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.12-SNAPSHOT")
