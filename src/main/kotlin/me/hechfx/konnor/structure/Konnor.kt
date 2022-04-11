@@ -28,13 +28,12 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.update
 import java.security.SecureRandom
 import java.time.Instant
-import kotlin.random.asKotlinRandom
 
 class Konnor(val config: DiscordConfig) {
     lateinit var client: Kord
 
     companion object {
-        val random = SecureRandom().asKotlinRandom()
+        val random = SecureRandom()
         val commandManager = CommandManager()
     }
 
@@ -98,7 +97,8 @@ class Konnor(val config: DiscordConfig) {
             OwnerCommand,
             OwnerSetVipCommandExecutor(this),
             OwnerSoulsAddExecutor(this),
-            OwnerSoulsRemoveExecutor(this)
+            OwnerSoulsRemoveExecutor(this),
+            ProfileRenderingTestCommandExecutor(this)
         )
 
         // ==[ Minecraft ]==
@@ -142,8 +142,8 @@ class Konnor(val config: DiscordConfig) {
 
             // ==[ Social Components ]==
             commandManager.register(PronounsMenuExecutor, PronounsMenuExecutor())
-            commandManager.register(ChangeAboutMeButtonExecutor, ChangeAboutMeButtonExecutor())
-            commandManager.register(SubmitAboutMeChangesModalExecutor, SubmitAboutMeChangesModalExecutor())
+            commandManager.register(ChangeProfileButtonExecutor, ChangeProfileButtonExecutor())
+            commandManager.register(SubmitProfileChangesModalExecutor, SubmitProfileChangesModalExecutor())
 
     }
 }

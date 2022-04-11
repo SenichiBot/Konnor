@@ -1,14 +1,18 @@
 package me.hechfx.konnor.command.dev
 
+import dev.kord.rest.NamedFile
 import kotlinx.datetime.Clock
 import me.hechfx.konnor.database.dao.User
 import me.hechfx.konnor.structure.Konnor
 import me.hechfx.konnor.util.Constants.ONE_DAY_IN_MILLISECONDS
+import me.hechfx.konnor.util.profile.ProfileGenerator
 import net.perfectdreams.discordinteraktions.common.commands.*
 import net.perfectdreams.discordinteraktions.common.commands.options.ApplicationCommandOptions
 import net.perfectdreams.discordinteraktions.common.commands.options.SlashCommandArguments
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.io.File
 import java.time.Instant
+import javax.imageio.ImageIO
 
 object OwnerCommand : SlashCommandDeclarationWrapper {
     override fun declaration() = slashCommand("owner", "Owner-only commands.") {
@@ -22,6 +26,29 @@ object OwnerCommand : SlashCommandDeclarationWrapper {
 
         subcommand("souls_add", "Add souls to a user.") {
             executor = OwnerSoulsAddExecutor
+        }
+
+        subcommand("profile_test", "test if the profile is redering well") {
+            executor = ProfileRenderingTestCommandExecutor
+        }
+    }
+}
+
+class ProfileRenderingTestCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
+    companion object : SlashCommandExecutorDeclaration(ProfileRenderingTestCommandExecutor::class)
+
+    override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        val profile = newSuspendedTransaction {
+            User.getOrInsert(context.sender.id.value.toLong())
+        }
+
+        val image = ProfileGenerator(800, 600, konnor).render(profile)
+        val file = File("profile.png")
+
+        ImageIO.write(image, "png", file)
+
+        context.sendMessage {
+            files?.add(NamedFile("profile.png", file.inputStream()))
         }
     }
 }

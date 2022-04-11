@@ -1,13 +1,13 @@
 package me.hechfx.konnor.command.social
 
-import dev.kord.common.Color
 import dev.kord.common.entity.ButtonStyle
-import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
-import me.hechfx.konnor.util.Constants.buildBadges
-import me.hechfx.konnor.command.social.button.ChangeAboutMeButtonExecutor
+import dev.kord.rest.NamedFile
+import me.hechfx.konnor.command.social.button.ChangeProfileButtonExecutor
 import me.hechfx.konnor.command.social.menu.PronounsMenuExecutor
 import me.hechfx.konnor.database.dao.User
 import me.hechfx.konnor.structure.Konnor
+import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
+import me.hechfx.konnor.util.profile.ProfileGenerator
 import net.perfectdreams.discordinteraktions.common.builder.message.actionRow
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
 import net.perfectdreams.discordinteraktions.common.commands.*
@@ -16,6 +16,11 @@ import net.perfectdreams.discordinteraktions.common.commands.options.SlashComman
 import net.perfectdreams.discordinteraktions.common.components.interactiveButton
 import net.perfectdreams.discordinteraktions.common.components.selectMenu
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import javax.imageio.ImageIO
+
 
 object ProfileCommand: SlashCommandDeclarationWrapper {
     override fun declaration() = slashCommand("profile", "Profile Command") {
@@ -46,63 +51,21 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
             User.getOrInsert(user.id.value.toLong())
         }
 
+        val image = ProfileGenerator(800, 600, konnor)
+            .render(profile)
+
+        val os = ByteArrayOutputStream()
+        ImageIO.write(image, "png", os)
+        val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
+
+
         context.sendMessage {
-            embed {
-                title = if (user.name.endsWith("s")) "${user.name}' Profile" else "${user.name}'s Profile"
-                description = profile.bio
-
-                val profileColor = java.awt.Color.decode(profile.color)
-
-                color = if (profileColor == null) {
-                    Color(0, 0, 0)
-                } else {
-                    Color(profileColor.red, profileColor.green, profileColor.blue)
-                }
-
-                if (profile.premium && profile.premiumType != null && profile.premiumDuration != null) {
-                    field {
-                        name = when (profile.premiumType) {
-                            1 -> "VIP"
-                            2 -> "VIP+"
-                            3 -> "VIP++"
-                            else -> ""
-                        }
-                        inline = true
-                        value = "Vip will end: <t:${profile.premiumDuration!!.epochSecond}:R>"
-                    }
-                }
-
-                val badges = buildBadges(user, konnor.client.rest)
-
-                if (badges != null) {
-                    field {
-                        name = "Badges"
-                        value = badges
-                        inline = true
-                    }
-                }
-
-                field {
-                    name = "Pronouns"
-                    inline = true
-                    value = profile.pronoun ?: "He/Him"
-                }
-
-                field {
-                    name = "Souls"
-                    inline = true
-                    value = if (profile.coins == 1L) "${profile.coins} Soul" else "${profile.coins} Souls"
-                }
-
-                thumbnail {
-                    url = user.avatar.cdnUrl.toUrl()
-                }
-            }
+            files?.add(NamedFile("profile.png", inputStream))
 
             if (user.id.value == context.sender.id.value) {
                 actionRow {
-                    interactiveButton(ButtonStyle.Primary, ChangeAboutMeButtonExecutor, context.sender.id.value.toString()) {
-                        label = "Change about me"
+                    interactiveButton(ButtonStyle.Primary, ChangeProfileButtonExecutor, context.sender.id.value.toString()) {
+                        label = "Edit Profile"
                     }
                 }
             }

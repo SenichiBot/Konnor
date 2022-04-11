@@ -252,6 +252,13 @@ class SoulsBetCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
             User.getOrInsert(context.sender.id.value.toLong())
         }
 
+        if (args[options.target].id == context.sender.id) {
+            context.sendMessage {
+                content = "You can't bet with yourself."
+            }
+            return
+        }
+
         if (authorProfile.coins < args[options.amount]) {
             context.sendMessage {
                 content = "You don't have Souls enough to bet."

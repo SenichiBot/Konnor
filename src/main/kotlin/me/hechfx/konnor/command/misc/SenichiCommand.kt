@@ -1,5 +1,7 @@
 package me.hechfx.konnor.command.misc
 
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.toList
 import me.hechfx.konnor.structure.Konnor
 import me.hechfx.konnor.util.Constants.DEFAULT_COLOR
 import net.perfectdreams.discordinteraktions.common.builder.message.embed
@@ -7,6 +9,7 @@ import net.perfectdreams.discordinteraktions.common.commands.*
 import net.perfectdreams.discordinteraktions.common.commands.options.ApplicationCommandOptions
 import net.perfectdreams.discordinteraktions.common.commands.options.SlashCommandArguments
 import net.perfectdreams.discordinteraktions.common.entities.messages.editMessage
+import kotlin.time.DurationUnit
 
 object SenichiCommand : SlashCommandDeclarationWrapper {
     override fun declaration() = slashCommand("senichi", "Commands that involves the bot.") {
@@ -35,7 +38,7 @@ class BotPingCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
 
         msg.editMessage {
             val diff = (System.currentTimeMillis() - ms)
-            content = "**API**: `${diff}ms` | **BOT**: `${konnor.client.gateway.averagePing}`"
+            content = "**API**: `${diff}ms` | **BOT**: `${konnor.client.gateway.averagePing?.toLong(DurationUnit.MILLISECONDS)}`"
         }
     }
 }
@@ -56,6 +59,24 @@ class BotInformationCommandExecutor(val konnor: Konnor) : SlashCommandExecutor()
                 color = DEFAULT_COLOR
                 title = "Hello, I'm Sen'ichi!"
                 description = "Hello, my name is 千一 (or if you prefer... Sen'ichi)! I'm a 17 year old gender fluid Canadian boy with Japanese descent, thus my name! ^^\nI really like cold foods, coffee (also caffeine addicted xD) and, for being tall (1,86m), I love playing basketball and volleyball! I also really enjoy helping people with their respective tasks. :3\n\nMy hobbies are listening to music (electronic, pop and Brazilian funk), dancing, programming and surfing when I go to the beach!"
+
+                field {
+                    name = "Servers"
+                    value = "```${konnor.client.guilds.toList().size}```"
+                    inline = true
+                }
+
+                field {
+                    name = "Cached Users"
+                    value = "```${konnor.client.guilds.flatMapMerge { it.members }.toList().size}```"
+                    inline = true
+                }
+
+                field {
+                    name = "JDK"
+                    value = "```${Runtime.version()}```"
+                    inline = true
+                }
             }
         }
     }
