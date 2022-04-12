@@ -11,13 +11,17 @@ import java.awt.*
 import me.hechfx.konnor.util.image.ImageUtil.roundCorners
 import me.hechfx.konnor.util.image.ImageUtil.toBufferedImage
 import me.hechfx.konnor.util.profile.ProfileGenerator.Companion.drawBadge
+import mu.KotlinLogging
 import java.awt.image.*
 import java.net.URL
+import java.util.logging.Logger
 import javax.imageio.ImageIO
 
 
 class ProfileGenerator(private val width: Int, private val height: Int, val konnor: Konnor) {
     companion object {
+        val logger = KotlinLogging.logger("ProfileGenerator")
+
         private val CONVOLVE_OP: List<ConvolveWithEdgeOp> = run {
             val radiuses = listOf(20, 15, 10, 5)
 
@@ -49,7 +53,14 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
                 "HouseBrilliance" to "https://cdn.discordapp.com/emojis/779938851731800115.png?size=2048",
                 "HouseBravery" to "https://cdn.discordapp.com/emojis/799682822750077018.png?size=2048",
                 "EarlySupporter" to "https://cdn.discordapp.com/emojis/800720404543963166.png?size=2048",
-                "VerifiedBot" to "https://cdn.discordapp.com/emojis/961117195256094770.png?size=2048"
+                "VerifiedBot" to "https://cdn.discordapp.com/emojis/961117195256094770.png?size=2048",
+                "DiscordPartner" to "https://cdn.discordapp.com/emojis/855849398746349578.png?size=2048",
+                "BugHunterLevel1" to "https://cdn.discordapp.com/emojis/799682709957247037.png?size=2048",
+                "BugHunterLevel2" to "https://cdn.discordapp.com/emojis/858341743376465950.png?size=2048",
+                "DiscordEmployee" to "https://cdn.discordapp.com/emojis/855849429064220682.png?size=2048",
+                "HypeSquad" to "https://cdn.discordapp.com/emojis/799682574829223996.png?size=2048",
+                "BotHttpInteractions" to "https://cdn.discordapp.com/emojis/751143575185784944.png?size=2048",
+                "DiscordNitro" to "https://cdn.discordapp.com/emojis/799682750377492482.png?size=2048"
             )
 
             val asUrl = URL(badges[name])
@@ -98,19 +109,27 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
 
         drawTextOverlay(image.width, image.height, graphics, user)
 
-        val badges = mutableListOf<UserFlag>()
+        val badges = mutableListOf<String>()
 
-        if (asDiscordUser.publicFlags?.flags != null) {
-            badges.addAll(asDiscordUser.publicFlags!!.flags)
+        if (asDiscordUser.publicFlags != null && asDiscordUser.publicFlags?.flags != null) {
+            asDiscordUser.publicFlags!!.flags.forEach {
+                badges.add(it.name)
+            }
+        }
+
+        if (asDiscordUser.avatar != null && asDiscordUser.avatar?.animated == true || asDiscordUser.getBannerUrl(Image.Format.WEBP) != null) {
+            logger.info { "The user have an animated avatar or banner! Adding DiscordNitro flag." }
+            badges.add("DiscordNitro")
         }
 
         if (badges.isNotEmpty()) {
+
             val basePos = 10
-            graphics.drawBadge(badges.removeFirst().name, 715, basePos)
+            graphics.drawBadge(badges.removeFirst(), 715, basePos)
             var pos = 15
             badges.forEach {
                 pos += 75
-                graphics.drawBadge(it.name, 715, pos)
+                graphics.drawBadge(it, 715, pos)
             }
         }
 
@@ -132,7 +151,7 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
             graphics.drawCenteredString(asDiscordUser.username, 390, 50)
 
             graphics.color = Color.WHITE
-            graphics.drawCenteredString(user.pronoun!!, 420, 20)
+            graphics.drawCenteredString(user.pronoun ?: "He/Him", 420, 20)
 
             graphics.color = Color.WHITE
             graphics.drawCenteredString(user.bio, 465, 30)
@@ -173,19 +192,26 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
 
         val g2 = image.createGraphics()
 
-        val badges = mutableListOf<UserFlag>()
+        val badges = mutableListOf<String>()
 
-        if (asDiscordUser.publicFlags?.flags != null) {
-            badges.addAll(asDiscordUser.publicFlags!!.flags)
+        if (asDiscordUser.publicFlags != null && asDiscordUser.publicFlags?.flags != null) {
+            asDiscordUser.publicFlags!!.flags.forEach {
+                badges.add(it.name)
+            }
+        }
+
+        if (asDiscordUser.avatar != null && asDiscordUser.avatar?.animated == true || asDiscordUser.getBannerUrl(Image.Format.WEBP) != null) {
+            logger.info { "The user have an animated avatar! Adding DiscordNitro flag." }
+            badges.add("DiscordNitro")
         }
 
         if (badges.isNotEmpty()) {
             val basePos = 10
-            g2.drawBadge(badges.removeFirst().name, 715, basePos)
+            g2.drawBadge(badges.removeFirst(), 715, basePos)
             var pos = 15
             badges.forEach {
                 pos += 75
-                g2.drawBadge(it.name, 715, pos)
+                g2.drawBadge(it, 715, pos)
             }
         }
 
