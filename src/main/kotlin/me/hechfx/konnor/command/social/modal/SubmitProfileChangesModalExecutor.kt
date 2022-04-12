@@ -10,6 +10,7 @@ import net.perfectdreams.discordinteraktions.common.modals.components.ModalArgum
 import net.perfectdreams.discordinteraktions.common.modals.components.ModalComponents
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import java.awt.Color
 import java.net.URL
 
 class SubmitProfileChangesModalExecutor : ModalSubmitExecutor {
@@ -37,8 +38,16 @@ class SubmitProfileChangesModalExecutor : ModalSubmitExecutor {
             }
 
             if (u.premium) {
-                Users.update({ Users.id eq context.sender.id.value.toLong() }) {
-                    it[color] = args[options.color]
+                try {
+                    Color.decode(args[options.color])
+
+                    Users.update({ Users.id eq context.sender.id.value.toLong() }) {
+                        it[color] = args[options.color]
+                    }
+                } catch (e: Exception) {
+                    Users.update({ Users.id eq context.sender.id.value.toLong() }) {
+                        it[color] = "#fc7b03"
+                    }
                 }
 
                 if (isValidUrl(args[options.backgroundUrl])) {
