@@ -118,7 +118,7 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
         }
 
         if (asDiscordUser.avatar != null && asDiscordUser.avatar?.animated == true || asDiscordUser.getBannerUrl(Image.Format.WEBP) != null) {
-            logger.info { "The user have an animated avatar or banner! Adding DiscordNitro flag." }
+            logger.info { "The user has an animated avatar or banner! Adding DiscordNitro flag." }
             badges.add("DiscordNitro")
         }
 
@@ -201,7 +201,7 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
         }
 
         if (asDiscordUser.avatar != null && asDiscordUser.avatar?.animated == true || asDiscordUser.getBannerUrl(Image.Format.WEBP) != null) {
-            logger.info { "The user have an animated avatar! Adding DiscordNitro flag." }
+            logger.info { "The user has an animated avatar! Adding DiscordNitro flag." }
             badges.add("DiscordNitro")
         }
 
