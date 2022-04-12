@@ -22,9 +22,9 @@ import java.io.InputStream
 import javax.imageio.ImageIO
 
 
-object ProfileCommand: SlashCommandDeclarationWrapper {
-    override fun declaration() = slashCommand("profile", "Profile Command") {
-        subcommand("check", "Check your profile.") {
+object SocialCommand: SlashCommandDeclarationWrapper {
+    override fun declaration() = slashCommand("social", "Social Commands") {
+        subcommand("profile", "Check your profile.") {
             executor = ProfileCheckCommandExecutor
         }
 

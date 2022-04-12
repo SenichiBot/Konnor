@@ -21,9 +21,9 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-object SoulsCommand: SlashCommandDeclarationWrapper {
-    override fun declaration() = slashCommand("souls", "Commands that have Souls involved.") {
-        subcommand("check", "Check how many Souls you have") {
+object EconomyCommand: SlashCommandDeclarationWrapper {
+    override fun declaration() = slashCommand("economy", "Economy Commands") {
+        subcommand("souls", "Check how many Souls you have") {
             executor = SoulsCheckCommandExecutor
         }
 

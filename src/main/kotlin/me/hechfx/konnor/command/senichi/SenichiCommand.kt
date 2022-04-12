@@ -1,4 +1,4 @@
-package me.hechfx.konnor.command.misc
+package me.hechfx.konnor.command.senichi
 
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.toList
@@ -33,12 +33,12 @@ class BotPingCommandExecutor(val konnor: Konnor) : SlashCommandExecutor() {
     override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
         val ms = System.currentTimeMillis()
         val msg = context.sendMessage {
-            content = "**API**: `...` | **BOT**: `${konnor.client.gateway.averagePing}`"
+            content = "**API**: `...` | **BOT**: `${konnor.client.gateway.averagePing?.toLong(DurationUnit.MILLISECONDS)}ms`"
         }
 
         msg.editMessage {
             val diff = (System.currentTimeMillis() - ms)
-            content = "**API**: `${diff}ms` | **BOT**: `${konnor.client.gateway.averagePing?.toLong(DurationUnit.MILLISECONDS)}`"
+            content = "**API**: `${diff}ms` | **BOT**: `${konnor.client.gateway.averagePing?.toLong(DurationUnit.MILLISECONDS)}ms`"
         }
     }
 }

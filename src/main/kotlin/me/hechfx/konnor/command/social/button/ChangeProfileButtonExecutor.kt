@@ -23,6 +23,7 @@ class ChangeProfileButtonExecutor: ButtonClickWithDataExecutor {
             actionRow {
                 textInput(SubmitProfileChangesModalExecutor.options.bio, TextInputStyle.Short, "Your new about me") {
                     allowedLength = 5..100
+                    value = u.bio
                 }
             }
 
@@ -30,6 +31,15 @@ class ChangeProfileButtonExecutor: ButtonClickWithDataExecutor {
                 actionRow {
                     textInput(SubmitProfileChangesModalExecutor.options.color, TextInputStyle.Short, "Your new color profile") {
                         allowedLength = 3..7
+                        value = u.color
+                    }
+                }
+
+                actionRow {
+                    textInput(SubmitProfileChangesModalExecutor.options.backgroundUrl, TextInputStyle.Short, "Your new background") {
+                        if (u.backgroundUrl != null) {
+                            value = u.backgroundUrl
+                        }
                     }
                 }
             }

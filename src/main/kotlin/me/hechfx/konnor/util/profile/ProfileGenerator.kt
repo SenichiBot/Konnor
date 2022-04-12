@@ -1,30 +1,70 @@
 package me.hechfx.konnor.util.profile
 
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.UserFlag
 import dev.kord.rest.Image
 import me.hechfx.konnor.database.dao.User
 import me.hechfx.konnor.structure.Konnor
+import me.hechfx.konnor.util.image.ConvolveWithEdgeOp
+import me.hechfx.konnor.util.image.ImageUtil.applyTransparency
 import java.awt.*
-import java.awt.geom.RoundRectangle2D
+import me.hechfx.konnor.util.image.ImageUtil.roundCorners
+import me.hechfx.konnor.util.image.ImageUtil.toBufferedImage
+import me.hechfx.konnor.util.profile.ProfileGenerator.Companion.drawBadge
 import java.awt.image.*
+import java.net.URL
 import javax.imageio.ImageIO
 
 
 class ProfileGenerator(private val width: Int, private val height: Int, val konnor: Konnor) {
     companion object {
-        val CONVOLVE_OP: ConvolveOp = run {
-            println("Creating Convolve Op")
-            val radius = 20
-            val size = radius * 2 + 1
-            val weight = 1.0f / (size * size)
-            val data = FloatArray(size * size)
+        private val CONVOLVE_OP: List<ConvolveWithEdgeOp> = run {
+            val radiuses = listOf(20, 15, 10, 5)
 
-            for (i in data.indices) {
-                data[i] = weight
+            radiuses.map {
+                val size = it * 2 + 1
+                val weight = 1.0f / (size * size)
+                val data = FloatArray(size * size)
+
+                for (i in data.indices) {
+                    data[i] = weight
+                }
+
+                val kernel = Kernel(size, size, data)
+
+
+                ConvolveWithEdgeOp(kernel, ConvolveWithEdgeOp.EDGE_REFLECT,
+                    RenderingHints(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                    )
+                )
             }
+        }
 
-            val kernel = Kernel(size, size, data)
-            ConvolveOp(kernel, ConvolveOp.EDGE_NO_OP, null)
+        private fun Graphics2D.drawBadge(name: String, xPos: Int, yPos: Int): Boolean {
+            val badges = hashMapOf(
+                "VerifiedBotDeveloper" to "https://cdn.discordapp.com/emojis/800732882901270598.png?size=2048",
+                "HouseBalance" to "https://cdn.discordapp.com/emojis/799682794997284904.png?size=2048",
+                "HouseBrilliance" to "https://cdn.discordapp.com/emojis/779938851731800115.png?size=2048",
+                "HouseBravery" to "https://cdn.discordapp.com/emojis/799682822750077018.png?size=2048",
+                "EarlySupporter" to "https://cdn.discordapp.com/emojis/800720404543963166.png?size=2048",
+                "VerifiedBot" to "https://cdn.discordapp.com/emojis/961117195256094770.png?size=2048"
+            )
+
+            val asUrl = URL(badges[name])
+            val badgeBuffer = ImageIO.read(asUrl.readBytes().inputStream())
+                .getScaledInstance(64, 64, BufferedImage.SCALE_SMOOTH)
+
+            return this.drawImage(badgeBuffer, xPos, yPos, 64, 64, null)
+        }
+
+        private fun Graphics2D.enableFontAntiAliasing(): Graphics2D {
+            this.setRenderingHint(
+                RenderingHints.KEY_TEXT_ANTIALIASING,
+                RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+            )
+            return this
         }
     }
 
@@ -35,10 +75,45 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
 
         val asDiscordUser = konnor.client.getUser(Snowflake(user.userId))!!
         val avatarUrl = asDiscordUser.avatar?.getImage(Image.Format.PNG, Image.Size.Size2048)?.data ?: asDiscordUser.defaultAvatar.getImage(Image.Format.PNG, Image.Size.Size2048).data
-        val avatar = ImageIO.read(avatarUrl.inputStream()).roundCorners(360*2)
+        val avatarBuffer = ImageIO.read(avatarUrl.inputStream())
+            .roundCorners(360*2)
+            .getScaledInstance(256, 256, BufferedImage.SCALE_SMOOTH)
 
-        graphics.color = Color(32, 34, 37)
-        graphics.fillRect(0, 0, 800, 600)
+        if (user.premium) {
+            if (user.backgroundUrl != null) {
+                val background = ImageIO.read(URL(user.backgroundUrl).readBytes().inputStream())
+                    .getScaledInstance(800, 600, BufferedImage.SCALE_SMOOTH)
+                    .toBufferedImage()
+
+                background.createGraphics().applyTransparency(0.5f)
+                graphics.drawImage(background, 0, 0, 800, 600, null)
+            } else {
+                graphics.color = Color(32, 34, 37)
+                graphics.fillRect(0, 0, 800, 600)
+            }
+        } else {
+            graphics.color = Color(32, 34, 37)
+            graphics.fillRect(0, 0, 800, 600)
+        }
+
+        drawTextOverlay(image.width, image.height, graphics, user)
+
+        val badges = mutableListOf<UserFlag>()
+
+        if (asDiscordUser.publicFlags?.flags != null) {
+            badges.addAll(asDiscordUser.publicFlags!!.flags)
+        }
+
+        if (badges.isNotEmpty()) {
+            val basePos = 10
+            graphics.drawBadge(badges.removeFirst().name, 715, basePos)
+            var pos = 15
+            badges.forEach {
+                pos += 75
+                graphics.drawBadge(it.name, 715, pos)
+            }
+        }
+
 
         if (user.premium) {
             val vipString = when (user.premiumType!!) {
@@ -51,13 +126,16 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString(vipString, 60, 65)
 
-            graphics.drawImage(avatar, width/2 - (256 / 2), 80, 256, 256, null)
+            graphics.drawImage(avatarBuffer, width/2 - (256 / 2), 80, 256, 256, null)
 
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString(asDiscordUser.username, 390, 50)
 
             graphics.color = Color.WHITE
-            graphics.drawCenteredString(user.bio, 455, 30)
+            graphics.drawCenteredString(user.pronoun!!, 420, 20)
+
+            graphics.color = Color.WHITE
+            graphics.drawCenteredString(user.bio, 465, 30)
 
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString("Souls", 530, 50)
@@ -65,13 +143,16 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString("${user.coins}", 585, 50)
         } else {
-            graphics.drawImage(avatar, width/2 - (256 / 2), 50, 256, 256, null)
+            graphics.drawImage(avatarBuffer, width/2 - (256 / 2), 50, 256, 256, null)
 
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString(asDiscordUser.username, 360, 50)
 
             graphics.color = Color.WHITE
-            graphics.drawCenteredString(user.bio, 425, 30)
+            graphics.drawCenteredString(user.pronoun ?: "He/Him", 390, 20)
+
+            graphics.color = Color.WHITE
+            graphics.drawCenteredString(user.bio, 435, 30)
 
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString("Souls", 500, 50)
@@ -79,8 +160,6 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
             graphics.color = Color.decode(user.color)
             graphics.drawCenteredString("${user.coins}", 555, 50)
         }
-
-        drawTextOverlay(image.width, image.height, graphics, user)
 
         // End graphics manipulation
         graphics.dispose()
@@ -90,10 +169,26 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
 
     private suspend fun drawTextOverlay(width: Int, height: Int, graphics: Graphics2D, user: User) {
         val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+        val asDiscordUser = konnor.client.getUser(Snowflake(user.userId))!!
 
         val g2 = image.createGraphics()
 
-        val asDiscordUser = konnor.client.getUser(Snowflake(user.userId))!!
+        val badges = mutableListOf<UserFlag>()
+
+        if (asDiscordUser.publicFlags?.flags != null) {
+            badges.addAll(asDiscordUser.publicFlags!!.flags)
+        }
+
+        if (badges.isNotEmpty()) {
+            val basePos = 10
+            g2.drawBadge(badges.removeFirst().name, 715, basePos)
+            var pos = 15
+            badges.forEach {
+                pos += 75
+                g2.drawBadge(it.name, 715, pos)
+            }
+        }
+
 
         if (user.premium) {
             val vipString = when (user.premiumType!!) {
@@ -103,37 +198,45 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
                 else -> "None"
             }
 
-            g2.color = Color.WHITE
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString(vipString, 60, 65)
 
-            g2.color = Color.WHITE
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString(asDiscordUser.username, 390, 50)
 
             g2.color = Color.BLACK
-            g2.drawCenteredString(user.bio, 455, 30)
+            g2.drawCenteredString(user.pronoun ?: "He/Him", 420, 20)
 
-            g2.color = Color.WHITE
+            g2.color = Color.BLACK
+            g2.drawCenteredString(user.bio, 465, 30)
+
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString("Souls", 530, 50)
 
-            g2.color = Color.WHITE
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString("${user.coins}", 585, 50)
         } else {
-            g2.color = Color.WHITE
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString(asDiscordUser.username, 360, 50)
 
             g2.color = Color.BLACK
-            g2.drawCenteredString(user.bio, 425, 30)
+            g2.drawCenteredString(user.pronoun ?: "He/Him", 390, 20)
 
-            g2.color = Color.WHITE
+            g2.color = Color.BLACK
+            g2.drawCenteredString(user.bio, 435, 30)
+
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString("Souls", 500, 50)
 
-            g2.color = Color.WHITE
+            g2.color = Color.decode(user.color)
             g2.drawCenteredString("${user.coins}", 555, 50)
         }
 
         g2.dispose()
 
-        graphics.drawImage(CONVOLVE_OP.filter(image, null), 0, 0, null)
+        for (convolve in CONVOLVE_OP) {
+            graphics.drawImage(convolve.filter(image, null), 0, 0, null)
+        }
     }
 
     private fun Graphics2D.drawCenteredString(str: String, y: Int, px: Int? = 10, family: String? = "arial", style: Int? = Font.PLAIN) {
@@ -145,35 +248,5 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
         val x = (width - fm.stringWidth(str)) / 2
 
         return this.drawString(str, x, y)
-    }
-
-    private fun BufferedImage.roundCorners(radius: Int): BufferedImage {
-        val w = this.width
-        val h = this.height
-        val output = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
-
-        val g2 = output.createGraphics()
-
-        g2.composite = AlphaComposite.Src
-        g2.color = Color.WHITE
-        g2.fill(RoundRectangle2D.Float(0f, 0f, w.toFloat(), h.toFloat(), radius.toFloat(), radius.toFloat()))
-        g2.composite = AlphaComposite.SrcAtop
-        g2.drawImage(this, 0, 0, null)
-        g2.setRenderingHint(
-            RenderingHints.KEY_ANTIALIASING,
-            RenderingHints.VALUE_ANTIALIAS_ON
-        )
-
-        g2.dispose()
-
-        return output
-    }
-
-    private fun Graphics2D.enableFontAntiAliasing(): Graphics2D {
-        this.setRenderingHint(
-            RenderingHints.KEY_TEXT_ANTIALIASING,
-            RenderingHints.VALUE_TEXT_ANTIALIAS_ON
-        )
-        return this
     }
 }

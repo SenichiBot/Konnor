@@ -7,6 +7,7 @@ object Users: LongIdTable() {
     var bio = text("bio")
     var likes = integer("likes")
     var color = text("color")
+    var backgroundUrl = text("background-url").nullable()
     var coins = long("coins")
     var pronoun = text("pronoun").nullable()
     var dailyTimeout = timestampWithTimeZone("daily-timeout").nullable()

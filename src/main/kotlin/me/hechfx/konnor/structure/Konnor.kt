@@ -12,7 +12,7 @@ import me.hechfx.konnor.command.dev.*
 import me.hechfx.konnor.command.economy.*
 import me.hechfx.konnor.command.economy.button.*
 import me.hechfx.konnor.command.minecraft.*
-import me.hechfx.konnor.command.misc.*
+import me.hechfx.konnor.command.senichi.*
 import me.hechfx.konnor.command.roblox.RobloxCommand
 import me.hechfx.konnor.command.roblox.RobloxUserCommandExecutor
 import me.hechfx.konnor.command.social.*
@@ -120,7 +120,7 @@ class Konnor(val config: DiscordConfig) {
 
         // ==[ Economy ]==
         commandManager.register(
-            SoulsCommand,
+            EconomyCommand,
             SoulsCheckCommandExecutor(this),
             SoulsPayCommandExecutor(this),
             SoulsTopCommandExecutor(this),
@@ -135,7 +135,7 @@ class Konnor(val config: DiscordConfig) {
 
         // ==[ Social }
         commandManager.register(
-            ProfileCommand,
+            SocialCommand,
             ProfilePronounCommandExecutor(this),
             ProfileCheckCommandExecutor(this)
         )
