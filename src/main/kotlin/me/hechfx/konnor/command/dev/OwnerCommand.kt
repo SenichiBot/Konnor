@@ -17,6 +17,7 @@ import javax.imageio.ImageIO
 object OwnerCommand : SlashCommandDeclarationWrapper {
     override fun declaration() = slashCommand("owner", "Owner-only commands.") {
         subcommand("vip", "Set vip to someone.") {
+
             executor = OwnerSetVipCommandExecutor
         }
 
@@ -38,6 +39,8 @@ class ProfileRenderingTestCommandExecutor(val konnor: Konnor) : SlashCommandExec
     companion object : SlashCommandExecutorDeclaration(ProfileRenderingTestCommandExecutor::class)
 
     override suspend fun execute(context: ApplicationCommandContext, args: SlashCommandArguments) {
+        if (!konnor.config.konnorConfig.owners.contains(context.sender.id.value.toLong())) return
+
         val profile = newSuspendedTransaction {
             User.getOrInsert(context.sender.id.value.toLong())
         }

@@ -51,23 +51,28 @@ class ProfileCheckCommandExecutor(val konnor: Konnor): SlashCommandExecutor() {
             User.getOrInsert(user.id.value.toLong())
         }
 
-        val image = ProfileGenerator(800, 600, konnor)
-            .render(profile)
+        try {
+            val image = ProfileGenerator(800, 600, konnor)
+                .render(profile)
 
-        val os = ByteArrayOutputStream()
-        ImageIO.write(image, "png", os)
-        val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
+            val os = ByteArrayOutputStream()
+            ImageIO.write(image, "png", os)
+            val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
 
+            context.sendMessage {
+                files?.add(NamedFile("profile.png", inputStream))
 
-        context.sendMessage {
-            files?.add(NamedFile("profile.png", inputStream))
-
-            if (user.id.value == context.sender.id.value) {
-                actionRow {
-                    interactiveButton(ButtonStyle.Primary, ChangeProfileButtonExecutor, context.sender.id.value.toString()) {
-                        label = "Edit Profile"
+                if (user.id.value == context.sender.id.value) {
+                    actionRow {
+                        interactiveButton(ButtonStyle.Primary, ChangeProfileButtonExecutor, context.sender.id.value.toString()) {
+                            label = "Edit Profile"
+                        }
                     }
                 }
+            }
+        } catch (e: Exception) {
+            context.sendMessage {
+                content = "Something has gone wrong... `${e.message}`"
             }
         }
     }

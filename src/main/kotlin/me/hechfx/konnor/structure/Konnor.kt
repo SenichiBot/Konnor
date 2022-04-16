@@ -1,20 +1,22 @@
 package me.hechfx.konnor.structure
 
-import dev.kord.common.entity.DiscordUser
-import dev.kord.common.entity.Snowflake
+import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.dataformat.yaml.*
+import dev.kord.common.entity.*
 import dev.kord.core.Kord
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.on
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import me.hechfx.konnor.command.dev.*
 import me.hechfx.konnor.command.economy.*
 import me.hechfx.konnor.command.economy.button.*
 import me.hechfx.konnor.command.minecraft.*
+import me.hechfx.konnor.command.moderation.*
+import me.hechfx.konnor.command.moderation.button.*
 import me.hechfx.konnor.command.senichi.*
-import me.hechfx.konnor.command.roblox.RobloxCommand
-import me.hechfx.konnor.command.roblox.RobloxUserCommandExecutor
+import me.hechfx.konnor.command.roblox.*
 import me.hechfx.konnor.command.social.*
 import me.hechfx.konnor.command.social.button.*
 import me.hechfx.konnor.command.social.menu.*
@@ -26,6 +28,7 @@ import net.perfectdreams.discordinteraktions.platforms.kord.commands.KordCommand
 import net.perfectdreams.discordinteraktions.platforms.kord.installDiscordInteraKTions
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import java.io.File
 import java.security.SecureRandom
 import java.time.Instant
 
@@ -34,7 +37,12 @@ class Konnor(val config: DiscordConfig) {
 
     companion object {
         val random = SecureRandom()
-        val commandManager = CommandManager()
+        val publicCommands = CommandManager()
+        val privateCommands = CommandManager()
+
+        fun getTranslation(locale: String): JsonNode {
+            return ObjectMapper(YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)).readTree(File("./translation/$locale/general.yml"))
+        }
     }
 
     suspend fun retrieveUser(snowflake: Snowflake): DiscordUser {
@@ -45,19 +53,34 @@ class Konnor(val config: DiscordConfig) {
         val applicationId = Snowflake(config.konnorConfig.applicationId)
         client = Kord(config.konnorConfig.token)
 
-        val registry = KordCommandRegistry(
+        val publicRegistry = KordCommandRegistry(
             applicationId,
             client.rest,
-            commandManager
+            publicCommands
         )
 
-        loadCommands(commandManager)
+        val privateRegistry = KordCommandRegistry(
+            applicationId,
+            client.rest,
+            privateCommands
+        )
+
+        loadCommands(publicCommands)
+        loadPrivateCommands(privateCommands)
 
         client.gateway.gateways.forEach {
             it.value.installDiscordInteraKTions(
                 applicationId,
                 client.rest,
-                commandManager
+                publicCommands
+            )
+        }
+
+        client.gateway.gateways.forEach {
+            it.value.installDiscordInteraKTions(
+                applicationId,
+                client.rest,
+                privateCommands
             )
         }
 
@@ -67,31 +90,40 @@ class Konnor(val config: DiscordConfig) {
 
         // TODO: Do a message when the user adds the bot to a server.
 
-        // ==[ Reset ]==
-        GlobalScope.launch {
-            newSuspendedTransaction {
-                Users.update({ Users.premiumDuration lessEq Instant.now() }) {
-                    it[premium] = false
-                    it[premiumType] = null
-                    it[premiumDuration] = null
+        coroutineScope {
+            // Reset VIP
+            launch {
+                newSuspendedTransaction {
+                    Users.update({ Users.premiumDuration lessEq Instant.now() }) {
+                        it[premium] = false
+                        it[premiumType] = null
+                        it[premiumDuration] = null
+                    }
                 }
+            }
 
-                Users.update({ Users.dailyTimeout lessEq Instant.now() }) {
-                    it[dailyTimeout] = null
+            // Reset Daily
+            launch {
+                newSuspendedTransaction {
+                    Users.update({ Users.dailyTimeout lessEq Instant.now() }) {
+                        it[dailyTimeout] = null
+                    }
                 }
             }
         }
 
-        registry.updateAllGlobalCommands(true)
+        publicRegistry.updateAllGlobalCommands()
+        privateRegistry.updateAllCommandsInGuild(Snowflake(928492632521449522L))
 
         client.login {
             presence {
+                status = PresenceStatus.DoNotDisturb
                 playing("Hello World!")
             }
         }
     }
 
-    private fun loadCommands(commandManager: CommandManager) {
+    private fun loadPrivateCommands(commandManager: CommandManager) {
         // ==[ Owners ]==
         commandManager.register(
             OwnerCommand,
@@ -100,6 +132,20 @@ class Konnor(val config: DiscordConfig) {
             OwnerSoulsRemoveExecutor(this),
             ProfileRenderingTestCommandExecutor(this)
         )
+    }
+
+    private fun loadCommands(commandManager: CommandManager) {
+        // ==[ Moderation ]==
+        commandManager.register(
+            ModerationCommand,
+            ModerationBanCommandExecutor(this),
+            ModerationTimeoutCommandExecutor(this)
+        )
+
+            // ==[ Moderation Components ]==
+            commandManager.register(ConfirmBanButtonExecutor, ConfirmBanButtonExecutor(this))
+            commandManager.register(DenyPunishmentButtonExecutor, DenyPunishmentButtonExecutor())
+            commandManager.register(ConfirmTimeoutButtonExecutor, ConfirmTimeoutButtonExecutor(this))
 
         // ==[ Minecraft ]==
         commandManager.register(
@@ -127,13 +173,13 @@ class Konnor(val config: DiscordConfig) {
             SoulsDailyCommandExecutor(this),
             SoulsBetCommandExecutor(this)
         )
-        // ==[ Economy Components ]==
+            // ==[ Economy Components ]==
             commandManager.register(ConfirmSoulsTransactionButtonExecutor, ConfirmSoulsTransactionButtonExecutor())
             commandManager.register(DenySoulsTransactionButtonExecutor, DenySoulsTransactionButtonExecutor())
             commandManager.register(GetDailyButtonExecutor, GetDailyButtonExecutor())
             commandManager.register(AcceptSoulsGamblingTransactionButtonExecutor, AcceptSoulsGamblingTransactionButtonExecutor(this))
 
-        // ==[ Social }
+        // ==[ Social ]==
         commandManager.register(
             SocialCommand,
             ProfilePronounCommandExecutor(this),
@@ -144,6 +190,5 @@ class Konnor(val config: DiscordConfig) {
             commandManager.register(PronounsMenuExecutor, PronounsMenuExecutor())
             commandManager.register(ChangeProfileButtonExecutor, ChangeProfileButtonExecutor())
             commandManager.register(SubmitProfileChangesModalExecutor, SubmitProfileChangesModalExecutor())
-
     }
 }

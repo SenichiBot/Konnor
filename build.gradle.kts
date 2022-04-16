@@ -26,8 +26,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.3.0-alpha14")
 
     // ==[ Discord ]==
-    implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.12-SNAPSHOT")
-    implementation("dev.kord:kord-core:0.8.x-20220315.083129-149")
+    implementation("net.perfectdreams.discordinteraktions:gateway-kord:0.0.13-SNAPSHOT")
+    implementation("dev.kord:kord-core:0.8.x-20220414.234246-171")
 
     // ==[ Database ]==
     implementation("com.zaxxer:HikariCP:5.0.1")
@@ -39,6 +39,7 @@ dependencies {
 
     // ==[ Serialization ]==
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-hocon:1.3.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0")
 }
 
 tasks {

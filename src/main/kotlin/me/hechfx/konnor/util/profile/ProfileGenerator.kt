@@ -23,9 +23,9 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
         val logger = KotlinLogging.logger("ProfileGenerator")
 
         private val CONVOLVE_OP: List<ConvolveWithEdgeOp> = run {
-            val radiuses = listOf(20, 15, 10, 5)
+            val radii = listOf(20, 15, 10, 5)
 
-            radiuses.map {
+            radii.map {
                 val size = it * 2 + 1
                 val weight = 1.0f / (size * size)
                 val data = FloatArray(size * size)
@@ -35,7 +35,6 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
                 }
 
                 val kernel = Kernel(size, size, data)
-
 
                 ConvolveWithEdgeOp(kernel, ConvolveWithEdgeOp.EDGE_REFLECT,
                     RenderingHints(
@@ -60,7 +59,8 @@ class ProfileGenerator(private val width: Int, private val height: Int, val konn
                 "DiscordEmployee" to "https://cdn.discordapp.com/emojis/855849429064220682.png?size=2048",
                 "HypeSquad" to "https://cdn.discordapp.com/emojis/799682574829223996.png?size=2048",
                 "BotHttpInteractions" to "https://cdn.discordapp.com/emojis/751143575185784944.png?size=2048",
-                "DiscordNitro" to "https://cdn.discordapp.com/emojis/799682750377492482.png?size=2048"
+                "DiscordNitro" to "https://cdn.discordapp.com/emojis/799682750377492482.png?size=2048",
+                "DiscordCertifiedModerator" to "https://cdn.discordapp.com/emojis/847151819469750353.png"
             )
 
             val asUrl = URL(badges[name])

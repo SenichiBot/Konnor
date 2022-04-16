@@ -2,8 +2,6 @@ package me.hechfx.konnor
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
-import kotlinx.serialization.hocon.encodeToConfig
 import me.hechfx.konnor.config.DiscordConfig
 import me.hechfx.konnor.database.DatabaseService
 import me.hechfx.konnor.structure.Konnor
